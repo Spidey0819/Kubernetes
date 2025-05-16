@@ -1,0 +1,34 @@
+options:
+  logging: CLOUD_LOGGING_ONLY
+steps:
+  # Step 1: Build the Docker image
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      [
+        'build',
+        '-t' ,
+        'us-central1-docker.pkg.dev/gcp-kubernetes-assignment/kubernetes-assignment/container2:latest',
+        '-f',
+        'Dockerfile',
+        '.'
+      ]
+
+  # Step 2: Push the Docker image to Google Container Registry (GCR)
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'us-central1-docker.pkg.dev/gcp-kubernetes-assignment/kubernetes-assignment/container2:latest']
+
+  # Step 3: Deploy the application and service to GKE
+  - name: "gcr.io/cloud-builders/gcloud"
+    entrypoint: "bash"
+    args:
+      - "-c"
+      - |
+        PROJECT=$$(gcloud config get-value core/project)
+        export USE_GKE_GCLOUD_AUTH_PLUGIN=true
+        gcloud container clusters get-credentials gke-kubernetes --zone us-central1-c --project gcp-kubernetes-assignment
+        kubectl apply -f container2-deployment.yaml
+
+images:
+  - 'us-central1-docker.pkg.dev/gcp-kubernetes-assignment/kubernetes-assignment/container2:latest'
+
+
